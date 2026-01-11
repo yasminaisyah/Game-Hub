@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Game Arcade</title>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            text-align: center;
+        }
+
+        /* Header */
+        header {
+            background-color: #16213e;
+            padding: 40px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 3rem;
+            color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            margin-top: 10px;
+            color: #a2a8d3;
+            font-size: 1.2rem;
+        }
+
+        /* Game Grid Container */
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Individual Game Card */
+        .game-card {
+            background-color: #0f3460;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        /* Placeholder for Game Image (Optional) */
+        .game-thumb {
+            height: 150px;
+            background: linear-gradient(45deg, #e94560, #533483);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .card-content {
+            padding: 20px;
+            text-align: left;
+        }
+
+        .card-content h2 {
+            margin: 0 0 10px 0;
+            color: #e94560;
+        }
+
+        .play-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #e94560;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        /* Footer */
+        footer {
+            padding: 20px;
+            background-color: #0f3460;
+            color: #a2a8d3;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>My Game Arcade</h1>
+        <p class="subtitle">A collection of educational games made with JS</p>
+    </header>
+
+    <div class="game-container">
+        
+        <a href="space-racer/index.html" class="game-card">
+            <div class="game-thumb">🚀</div>
+            <div class="card-content">
+                <h2>Space Racer</h2>
+                <p>Blast through space while solving math problems! Master whole numbers and patterns.</p>
+                <span class="play-btn">Play Now</span>
+            </div>
+        </a>
+
+        <a href="rational-rush/index.html" class="game-card">
+            <div class="game-thumb">➗</div>
+            <div class="card-content">
+                <h2>Rational Rush</h2>
+                <p>A fast-paced game about integers, fractions, and decimals.</p>
+                <span class="play-btn">Play Now</span>
+            </div>
+        </a>
+
+        <a href="power-defense/index.html" class="game-card">
+            <div class="game-thumb">🏰</div>
+            <div class="card-content">
+                <h2>Power Defense</h2>
+                <p>Defend your tower using the power of squares and cubes.</p>
+                <span class="play-btn">Play Now</span>
+            </div>
+        </a>
+
+        </div>
+
+    <footer>
+        <p>&copy; 2026 My Game Arcade</p>
+    </footer>
+
+</body>
+</html>
