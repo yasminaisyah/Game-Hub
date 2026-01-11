@@ -3,147 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Game Arcade</title>
+    <title>My Game Hub</title>
     <style>
-        /* General Styles */
+        /* --- CSS STYLES --- */
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a2e;
-            color: #fff;
-            text-align: center;
+            background-color: #121212;
+            color: #ffffff;
         }
 
-        /* Header */
         header {
-            background-color: #16213e;
+            background: linear-gradient(90deg, #1CB5E0 0%, #000851 100%);
             padding: 40px 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        h1 {
-            margin: 0;
-            font-size: 3rem;
-            color: #e94560;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        h1 { margin: 0; font-size: 3rem; text-transform: uppercase; letter-spacing: 2px; }
+        p.subtitle { color: #a0e6ff; font-size: 1.2rem; margin-top: 10px; }
+
+        /* Search Bar */
+        .search-container { margin-top: 20px; }
+        input#searchBar {
+            padding: 12px;
+            width: 300px;
+            border-radius: 25px;
+            border: none;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
         }
 
-        p.subtitle {
-            margin-top: 10px;
-            color: #a2a8d3;
-            font-size: 1.2rem;
+        /* Category Headers */
+        .category-title {
+            margin: 40px 20px 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+            color: #1CB5E0;
+            font-size: 1.8rem;
         }
 
-        /* Game Grid Container */
-        .game-container {
+        /* Grid Layout */
+        .game-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            padding: 50px;
-            max-width: 1200px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
         }
 
-        /* Individual Game Card */
+        /* Game Cards */
         .game-card {
-            background-color: #0f3460;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
+            background-color: #1e1e2e;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
             text-decoration: none;
             color: white;
+            transition: transform 0.2s, background 0.2s;
+            border: 1px solid #333;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            justify-content: center;
+            height: 100px;
         }
 
         .game-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.4);
+            transform: translateY(-5px);
+            background-color: #2a2a40;
+            border-color: #1CB5E0;
         }
 
-        /* Placeholder for Game Image (Optional) */
-        .game-thumb {
-            height: 150px;
-            background: linear-gradient(45deg, #e94560, #533483);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-        }
+        .game-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+        .game-name { font-weight: bold; font-size: 1rem; text-transform: capitalize; }
 
-        .card-content {
-            padding: 20px;
-            text-align: left;
-        }
-
-        .card-content h2 {
-            margin: 0 0 10px 0;
-            color: #e94560;
-        }
-
-        .play-btn {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: #e94560;
-            color: white;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        
-        /* Footer */
-        footer {
-            padding: 20px;
-            background-color: #0f3460;
-            color: #a2a8d3;
-            margin-top: 40px;
-        }
+        footer { text-align: center; padding: 40px; color: #666; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>My Game Arcade</h1>
-        <p class="subtitle">A collection of educational games made with JS</p>
+        <h1>Game Hub</h1>
+        <p class="subtitle">Select a category below to play</p>
+        <div class="search-container">
+            <input type="text" id="searchBar" onkeyup="filterGames()" placeholder="Search for a game...">
+        </div>
     </header>
 
-    <div class="game-container">
-        
-        <a href="space-racer/index.html" class="game-card">
-            <div class="game-thumb">🚀</div>
-            <div class="card-content">
-                <h2>Space Racer</h2>
-                <p>Blast through space while solving math problems! Master whole numbers and patterns.</p>
-                <span class="play-btn">Play Now</span>
-            </div>
+    <h2 class="category-title">🎨 Art Studio</h2>
+    <div class="game-grid">
+        <a href="artstudio/index.html" class="game-card">
+            <span class="game-icon">🎨</span>
+            <span class="game-name">Art Studio</span>
         </a>
+    </div>
 
-        <a href="rational-rush/index.html" class="game-card">
-            <div class="game-thumb">➗</div>
-            <div class="card-content">
-                <h2>Rational Rush</h2>
-                <p>A fast-paced game about integers, fractions, and decimals.</p>
-                <span class="play-btn">Play Now</span>
-            </div>
-        </a>
+    <h2 class="category-title">📚 English</h2>
+    <div class="game-grid">
+        <a href="english/WordBuilderAdventure/index.html" class="game-card"><span class="game-icon">📖</span><span class="game-name">Word Builder Adventure</span></a>
+        <a href="english/cosmictypedefender/index.html" class="game-card"><span class="game-icon">⌨️</span><span class="game-name">Cosmic Type Defender</span></a>
+        <a href="english/deepseavocab/index.html" class="game-card"><span class="game-icon">🌊</span><span class="game-name">Deep Sea Vocab</span></a>
+        <a href="english/factory/index.html" class="game-card"><span class="game-icon">🏭</span><span class="game-name">Factory</span></a>
+        <a href="english/grammargumshoe/index.html" class="game-card"><span class="game-icon">🕵️</span><span class="game-name">Grammar Gumshoe</span></a>
+        <a href="english/lexiconlab/index.html" class="game-card"><span class="game-icon">🧪</span><span class="game-name">Lexicon Lab</span></a>
+        <a href="english/sensei's slice/index.html" class="game-card"><span class="game-icon">⚔️</span><span class="game-name">Sensei's Slice</span></a>
+        <a href="english/snakegame/index.html" class="game-card"><span class="game-icon">🐍</span><span class="game-name">Snake Game</span></a>
+        <a href="english/thelexiconquest/index.html" class="game-card"><span class="game-icon">🏰</span><span class="game-name">The Lexicon Quest</span></a>
+        <a href="english/wizardgame/index.html" class="game-card"><span class="game-icon">🧙</span><span class="game-name">Wizard Game</span></a>
+    </div>
 
-        <a href="power-defense/index.html" class="game-card">
-            <div class="game-thumb">🏰</div>
-            <div class="card-content">
-                <h2>Power Defense</h2>
-                <p>Defend your tower using the power of squares and cubes.</p>
-                <span class="play-btn">Play Now</span>
-            </div>
-        </a>
+    <h2 class="category-title">➗ Math</h2>
+    <div class="game-grid">
+        <a href="math/abyssmath.html" class="game-card"><span class="game-icon">🕳️</span><span class="game-name">Abyss Math</span></a>
+        <a href="math/mathcatchball.html" class="game-card"><span class="game-icon">⚾</span><span class="game-name">Math Catchball</span></a>
+        <a href="math/mathmaster.html" class="game-card"><span class="game-icon">🎓</span><span class="game-name">Math Master</span></a>
+        <a href="math/mathminer.html" class="game-card"><span class="game-icon">⛏️</span><span class="game-name">Math Miner</span></a>
+        <a href="math/mathracer.html" class="game-card"><span class="game-icon">🏎️</span><span class="game-name">Math Racer</span></a>
+        <a href="math/mathserpent.html" class="game-card"><span class="game-icon">🐍</span><span class="game-name">Math Serpent</span></a>
+        <a href="math/neonblaster.html" class="game-card"><span class="game-icon">🔫</span><span class="game-name">Neon Blaster</span></a>
+        <a href="math/neonshaperush.html" class="game-card"><span class="game-icon">🔺</span><span class="game-name">Neon Shape Rush</span></a>
+        <a href="math/pizzapi.html" class="game-card"><span class="game-icon">🍕</span><span class="game-name">Pizza Pi</span></a>
+        <a href="math/rocketmath.html" class="game-card"><span class="game-icon">🚀</span><span class="game-name">Rocket Math</span></a>
+    </div>
 
-        </div>
+    <h2 class="category-title">🔬 Science</h2>
+    <div class="game-grid">
+        <a href="science/SolarSystem/index.html" class="game-card"><span class="game-icon">🪐</span><span class="game-name">Solar System</span></a>
+        <a href="science/VirusvsImmuneSystem/index.html" class="game-card"><span class="game-icon">🦠</span><span class="game-name">Virus vs Immune</span></a>
+        <a href="science/bondbreaker/index.html" class="game-card"><span class="game-icon">💥</span><span class="game-name">Bond Breaker</span></a>
+        <a href="science/ecoadventure/index.html" class="game-card"><span class="game-icon">🌱</span><span class="game-name">Eco Adventure</span></a>
+        <a href="science/foodchain/index.html" class="game-card"><span class="game-icon">🦁</span><span class="game-name">Food Chain</span></a>
+        <a href="science/geodrill/index.html" class="game-card"><span class="game-icon">🚜</span><span class="game-name">Geo Drill</span></a>
+        <a href="science/mattermaster/index.html" class="game-card"><span class="game-icon">🧊</span><span class="game-name">Matter Master</span></a>
+        <a href="science/orbitarchitecture/index.html" class="game-card"><span class="game-icon">🌌</span><span class="game-name">Orbit Architecture</span></a>
+        <a href="science/polaritypilot/index.html" class="game-card"><span class="game-icon">🧲</span><span class="game-name">Polarity Pilot</span></a>
+        <a href="science/scienceadventure/index.html" class="game-card"><span class="game-icon">🧗</span><span class="game-name">Science Adventure</span></a>
+    </div>
+
+    <h2 class="category-title">⚗️ Chemistry</h2>
+    <div class="game-grid">
+        <a href="chemistry/atomicpop.html" class="game-card"><span class="game-icon">🎈</span><span class="game-name">Atomic Pop</span></a>
+        <a href="chemistry/bondbreaker.html" class="game-card"><span class="game-icon">💔</span><span class="game-name">Bond Breaker (File)</span></a>
+        <a href="chemistry/chemistrylab" class="game-card"><span class="game-icon">🥼</span><span class="game-name">Chemistry Lab</span></a>
+        <a href="chemistry/elementstriker.html" class="game-card"><span class="game-icon">⚡</span><span class="game-name">Element Striker</span></a>
+        <a href="chemistry/mattermaster.html" class="game-card"><span class="game-icon">🧱</span><span class="game-name">Matter Master (File)</span></a>
+        <a href="chemistry/neonnucleas.html" class="game-card"><span class="game-icon">🟢</span><span class="game-name">Neon Nucleus</span></a>
+        <a href="chemistry/orbitalrush.html" class="game-card"><span class="game-icon">💫</span><span class="game-name">Orbital Rush</span></a>
+        <a href="chemistry/reactionrush.html" class="game-card"><span class="game-icon">🔥</span><span class="game-name">Reaction Rush</span></a>
+        <a href="chemistry/spinlab.html" class="game-card"><span class="game-icon">🔄</span><span class="game-name">Spin Lab</span></a>
+        <a href="chemistry/statejumper.html" class="game-card"><span class="game-icon">🌫️</span><span class="game-name">State Jumper</span></a>
+    </div>
+
+    <h2 class="category-title">🌍 Geography</h2>
+    <div class="game-grid">
+        <a href="geography/aerodrop/index.html" class="game-card"><span class="game-icon">🪂</span><span class="game-name">Aero Drop</span></a>
+        <a href="geography/capitalhunter/index.html" class="game-card"><span class="game-icon">🏛️</span><span class="game-name">Capital Hunter</span></a>
+        <a href="geography/flagcatcher/index.html" class="game-card"><span class="game-icon">🏳️</span><span class="game-name">Flag Catcher</span></a>
+        <a href="geography/geo-sorter/index.html" class="game-card"><span class="game-icon">📦</span><span class="game-name">Geo Sorter</span></a>
+        <a href="geography/geodefenders/index.html" class="game-card"><span class="game-icon">🛡️</span><span class="game-name">Geo Defenders</span></a>
+        <a href="geography/geographyworldexplorer/index.html" class="game-card"><span class="game-icon">🧭</span><span class="game-name">World Explorer</span></a>
+        <a href="geography/geojumble/index.html" class="game-card"><span class="game-icon">🧩</span><span class="game-name">Geo Jumble</span></a>
+        <a href="geography/geosnake/index.html" class="game-card"><span class="game-icon">🐍</span><span class="game-name">Geo Snake</span></a>
+        <a href="geography/neongeo/index.html" class="game-card"><span class="game-icon">🏙️</span><span class="game-name">Neon Geo</span></a>
+        <a href="geography/spygame/index.html" class="game-card"><span class="game-icon">🕵️</span><span class="game-name">Spy Game</span></a>
+    </div>
+
+    <h2 class="category-title">🧠 General Knowledge</h2>
+    <div class="game-grid">
+        <a href="generalknowledge/balloonpop.html" class="game-card"><span class="game-icon">🎈</span><span class="game-name">Balloon Pop</span></a>
+        <a href="generalknowledge/brainybeast.html" class="game-card"><span class="game-icon">👹</span><span class="game-name">Brainy Beast</span></a>
+        <a href="generalknowledge/calmwater.html" class="game-card"><span class="game-icon">💧</span><span class="game-name">Calm Water</span></a>
+        <a href="generalknowledge/emojidetective.html" class="game-card"><span class="game-icon">🧐</span><span class="game-name">Emoji Detective</span></a>
+        <a href="generalknowledge/mazegame.html" class="game-card"><span class="game-icon">🌀</span><span class="game-name">Maze Game</span></a>
+        <a href="generalknowledge/neonfactrush.html" class="game-card"><span class="game-icon">💡</span><span class="game-name">Neon Fact Rush</span></a>
+        <a href="generalknowledge/quizgame.html" class="game-card"><span class="game-icon">❓</span><span class="game-name">Quiz Game</span></a>
+        <a href="generalknowledge/roborecall.html" class="game-card"><span class="game-icon">🤖</span><span class="game-name">Robo Recall</span></a>
+        <a href="generalknowledge/skyhighbuilder.html" class="game-card"><span class="game-icon">🏗️</span><span class="game-name">Sky High Builder</span></a>
+        <a href="generalknowledge/wordjungle.html" class="game-card"><span class="game-icon">🌴</span><span class="game-name">Word Jungle</span></a>
+    </div>
 
     <footer>
-        <p>&copy; 2026 My Game Arcade</p>
+        <p>Created by Yasmin Aisyah &copy; 2026</p>
     </footer>
 
+    <script>
+        // Simple search function to filter games
+        function filterGames() {
+            let input = document.getElementById('searchBar').value.toUpperCase();
+            let cards = document.getElementsByClassName('game-card');
+            
+            for (let i = 0; i < cards.length; i++) {
+                let name = cards[i].getElementsByClassName('game-name')[0];
+                if (name.innerText.toUpperCase().indexOf(input) > -1) {
+                    cards[i].style.display = "flex";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+        }
+    </script>
 </body>
 </html>
