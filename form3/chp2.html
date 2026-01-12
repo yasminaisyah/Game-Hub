@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Standard: Warp Drive</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Rajdhani', sans-serif;
+            user-select: none;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* HUD */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #hud-top {
+            display: flex;
+            justify-content: space-between;
+            width: 95%;
+            margin-top: 15px;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .hud-panel {
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #0ff;
+            color: #0ff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transform: skew(-10deg);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Menus */
+        .screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            pointer-events: auto;
+        }
+        .hidden { display: none !important; }
+
+        h1 {
+            font-size: 3.5rem;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin: 0;
+            background: linear-gradient(to bottom, #fff, #0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px #0ff;
+            text-align: center;
+        }
+
+        p {
+            color: #aaa;
+            font-size: 1.1rem;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        button {
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: bold;
+            background: #0ff;
+            color: #000;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 15px #0ff;
+            transition: 0.2s;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #fff;
+            box-shadow: 0 0 30px #fff;
+            transform: scale(1.1);
+        }
+
+        /* End Game Specifics */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .stat-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .stat-label { font-size: 0.9rem; color: #888; display: block; }
+        .stat-val { font-size: 1.8rem; color: #fff; font-weight: bold; }
+        
+        .stars {
+            font-size: 3rem;
+            color: #333; /* Empty star color */
+            margin-bottom: 10px;
+        }
+        .star-filled { color: #ffd700; text-shadow: 0 0 15px #ffd700; }
+
+        /* Floating +Time Text */
+        .float-text {
+            position: absolute;
+            font-weight: bold;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            z-index: 5;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        <div id="hud-top">
+            <div class="hud-panel" style="border-color:#f33; color:#f33">HP: <span id="hpVal">100</span>%</div>
+            <div class="hud-panel" style="border-color:#ff0; color:#ff0">TIME: <span id="timeVal">60</span>s</div>
+            <div class="hud-panel">SCORE: <span id="scoreVal">0</span></div>
+        </div>
+    </div>
+
+    <div id="start-screen" class="screen">
+        <h1>WARP DRIVE</h1>
+        <p><strong>Chapter 2: Standard Form & Sig Figs</strong><br><br>
+        Your ship is carrying a <strong>Number</strong>.<br>
+        Pilot into the <strong>Gate</strong> that matches its converted form.<br>
+        (e.g., Ship: 500 &rightarrow; Gate: 5 x 10²)</p>
+        <div class="stat-box" style="margin-bottom: 20px;">
+            <span class="stat-label">HIGH SCORE</span>
+            <span class="stat-val" id="menuHighScore">0</span>
+        </div>
+        <button onclick="startGame()">ENGAGE</button>
+    </div>
+
+    <div id="game-over-screen" class="screen hidden">
+        <h1 id="end-title" style="color: #f33; text-shadow: 0 0 20px #f00;">HULL BREACH</h1>
+        
+        <div class="stars" id="end-stars">
+            <span>★</span><span>★</span><span>★</span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-label">FINAL SCORE</span>
+                <span class="stat-val" id="finalScore">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">HIGH SCORE</span>
+                <span class="stat-val" id="endHighScore">0</span>
+            </div>
+        </div>
+
+        <p id="end-reason">Mission Failed.</p>
+        <button onclick="startGame()">RESTART</button>
+    </div>
+</div>
+
+<script>
+    /**
+     * AUDIO SYSTEM
+     */
+    const AudioSys = {
+        ctx: null,
+        init: function() {
+            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        },
+        playTone: function(freq, type, dur, vol=0.1) {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            g.gain.setValueAtTime(vol, this.ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+            osc.connect(g);
+            g.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + dur);
+        },
+        playWarp: function() {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1000, this.ctx.currentTime + 0.5);
+            g.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
+            osc.connect(g);
+            g.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.5);
+        },
+        playCrash: function() {
+            this.playTone(100, 'sawtooth', 0.4, 0.2);
+            this.playTone(80, 'square', 0.4, 0.2);
+        }
+    };
+
+    /**
+     * MATH LOGIC
+     */
+    function generateProblem(level) {
+        const modeRoll = Math.random();
+        let mode = 'large_std';
+        if (level > 2) mode = Math.random() > 0.5 ? 'small_std' : 'large_std';
+        if (level > 4) {
+            let r = Math.random();
+            if(r < 0.4) mode = 'sigfig';
+            else if(r < 0.7) mode = 'large_std';
+            else mode = 'small_std';
+        }
+
+        let questionText = "";
+        let correctHtml = "";
+        let decoys = [];
+
+        if (mode === 'large_std') {
+            let power = Math.floor(Math.random() * 4) + 2; 
+            let mantissa = (Math.floor(Math.random() * 90) + 10) / 10; 
+            mantissa = Math.round(mantissa * 10) / 10;
+            
+            let num = mantissa * Math.pow(10, power);
+            questionText = num.toString();
+            if (num >= 10000) questionText = num.toLocaleString().replace(/,/g, '');
+
+            correctHtml = { base: mantissa, exp: power };
+
+            decoys.push({ base: mantissa * 10, exp: power - 1 });
+            decoys.push({ base: mantissa, exp: power + 1 });
+            if (Math.random() > 0.5) decoys.push({ base: mantissa, exp: power - 1 });
+            else decoys.push({ base: (mantissa+1), exp: power });
+        }
+        else if (mode === 'small_std') {
+            let power = Math.floor(Math.random() * 4) + 1; 
+            let mantissa = (Math.floor(Math.random() * 90) + 10) / 10; 
+            mantissa = Math.round(mantissa * 10) / 10;
+
+            let zeros = "0.";
+            for(let i=0; i<power-1; i++) zeros += "0";
+            let mStr = mantissa.toString().replace('.', '');
+            questionText = zeros + mStr;
+
+            correctHtml = { base: mantissa, exp: -power };
+
+            decoys.push({ base: mantissa, exp: -(power+1) });
+            decoys.push({ base: mantissa, exp: -(power-1) });
+            decoys.push({ base: (mantissa/10), exp: -power });
+        }
+        else if (mode === 'sigfig') {
+            let sf = Math.floor(Math.random() * 2) + 1; 
+            if(sf === 1) sf = 2;
+            if(Math.random() > 0.5) sf = 3;
+
+            let n = (Math.random() * 100).toFixed(4); 
+            questionText = `${n}\n(${sf} s.f.)`;
+
+            let num = parseFloat(n);
+            let ans = Number(num.toPrecision(sf));
+            
+            correctHtml = { text: ans.toString() };
+
+            let wrong1 = Number(num.toPrecision(sf+1));
+            let wrong2 = Number(num.toPrecision(sf-1));
+            if(isNaN(wrong2)) wrong2 = ans + 1;
+
+            decoys.push({ text: wrong1.toString() });
+            decoys.push({ text: wrong2.toString() });
+        }
+
+        return {
+            q: questionText,
+            correct: correctHtml,
+            decoys: decoys,
+            isStd: (mode !== 'sigfig')
+        };
+    }
+
+    /**
+     * GAME ENGINE
+     */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Load High Score
+    let savedHighScore = localStorage.getItem('cosmicHighScore') || 0;
+    document.getElementById('menuHighScore').innerText = savedHighScore;
+
+    let state = {
+        active: false,
+        score: 0,
+        hp: 100,
+        level: 1,
+        time: 60,
+        lastTime: 0,
+        shipX: 0,
+        shipTargetX: 0,
+        shipSpeed: 0,
+        stars: [],
+        gates: [],
+        currentProblem: null,
+        problemTimer: 0,
+        warpFactor: 1,
+        baseSpeed: 3
+    };
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        if(!state.active) state.shipX = canvas.width / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Input
+    function handleInput(x) {
+        if (!state.active) return;
+        state.shipTargetX = x;
+        if(state.shipTargetX < 50) state.shipTargetX = 50;
+        if(state.shipTargetX > canvas.width - 50) state.shipTargetX = canvas.width - 50;
+    }
+
+    window.addEventListener('mousemove', e => handleInput(e.clientX));
+    window.addEventListener('touchmove', e => { e.preventDefault(); handleInput(e.touches[0].clientX); }, {passive: false});
+    window.addEventListener('keydown', e => {
+        if (!state.active) return;
+        if (e.key === 'ArrowLeft') state.shipTargetX -= canvas.width / 3;
+        if (e.key === 'ArrowRight') state.shipTargetX += canvas.width / 3;
+        handleInput(state.shipTargetX);
+    });
+
+    // Game Logic
+    function initStars() {
+        state.stars = [];
+        for(let i=0; i<150; i++) {
+            state.stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                z: Math.random() * 2 + 0.5 
+            });
+        }
+    }
+
+    function spawnGate() {
+        const problem = generateProblem(state.level);
+        state.currentProblem = problem.q;
+        
+        const laneW = canvas.width / 3;
+        const positions = [laneW * 0.5, laneW * 1.5, laneW * 2.5];
+        
+        let answers = [
+            { val: problem.correct, type: 'correct', isStd: problem.isStd },
+            { val: problem.decoys[0], type: 'wrong', isStd: problem.isStd },
+            { val: problem.decoys[1] || problem.decoys[0], type: 'wrong', isStd: problem.isStd }
+        ];
+
+        for (let i = answers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [answers[i], answers[j]] = [answers[j], answers[i]];
+        }
+
+        state.gates.push({
+            y: -150,
+            slots: [
+                { x: positions[0], item: answers[0] },
+                { x: positions[1], item: answers[1] },
+                { x: positions[2], item: answers[2] }
+            ]
+        });
+    }
+
+    function showFloat(text, color) {
+        const el = document.createElement('div');
+        el.className = 'float-text';
+        el.innerText = text;
+        el.style.color = color;
+        el.style.left = (state.shipX - 20) + 'px';
+        el.style.top = (canvas.height - 200) + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+    }
+
+    function endGame(reason) {
+        state.active = false;
+        
+        // High Score Logic
+        if(state.score > savedHighScore) {
+            savedHighScore = state.score;
+            localStorage.setItem('cosmicHighScore', savedHighScore);
+        }
+
+        // Star Logic
+        let stars = 0;
+        if(state.score > 2000) stars = 3;
+        else if(state.score > 800) stars = 2;
+        else if(state.score > 0) stars = 1;
+
+        const starEl = document.getElementById('end-stars');
+        starEl.innerHTML = '';
+        for(let i=0; i<3; i++) {
+            let s = document.createElement('span');
+            s.innerText = '★';
+            if(i < stars) s.className = 'star-filled';
+            starEl.appendChild(s);
+        }
+
+        // Title and Colors based on reason
+        const titleEl = document.getElementById('end-title');
+        const reasonEl = document.getElementById('end-reason');
+        
+        if (reason === 'time') {
+            titleEl.innerText = "OUT OF TIME";
+            titleEl.style.color = "#ff0";
+            titleEl.style.textShadow = "0 0 20px #ff0";
+            reasonEl.innerText = "The warp gate closed.";
+        } else {
+            titleEl.innerText = "HULL BREACH";
+            titleEl.style.color = "#f33";
+            titleEl.style.textShadow = "0 0 20px #f00";
+            reasonEl.innerText = "Your shield reached 0%.";
+        }
+
+        document.getElementById('finalScore').innerText = state.score;
+        document.getElementById('endHighScore').innerText = savedHighScore;
+        document.getElementById('game-over-screen').classList.remove('hidden');
+    }
+
+    function update() {
+        if (!state.active) return;
+
+        // Timer Logic
+        let now = Date.now();
+        let dt = (now - state.lastTime) / 1000;
+        state.lastTime = now;
+        
+        state.time -= dt;
+        if (state.time <= 0) {
+            state.time = 0;
+            endGame('time');
+            return;
+        }
+
+        // Movement
+        const dx = state.shipTargetX - state.shipX;
+        state.shipX += dx * 0.1;
+        state.shipSpeed = dx * 0.1;
+
+        // Speed calculation
+        let speed = state.baseSpeed * state.warpFactor;
+        if (state.warpFactor > 1) state.warpFactor *= 0.98; // Decay boost
+
+        // Starfield
+        state.stars.forEach(s => {
+            s.y += s.z * speed;
+            if (s.y > canvas.height) {
+                s.y = 0;
+                s.x = Math.random() * canvas.width;
+            }
+        });
+
+        // Spawn logic
+        state.problemTimer += speed;
+        if (state.gates.length === 0 && state.problemTimer > 300) {
+            spawnGate();
+            state.problemTimer = 0;
+        }
+
+        // Gate Logic
+        const playerY = canvas.height - 150;
+        const gateW = (canvas.width / 3) - 20;
+
+        for (let i = state.gates.length - 1; i >= 0; i--) {
+            let g = state.gates[i];
+            g.y += speed;
+
+            // Collision
+            if (g.y > playerY - 40 && g.y < playerY + 40) {
+                if (!g.hit) {
+                     // Check specific slot
+                    g.slots.forEach(slot => {
+                        let d = Math.abs(state.shipX - slot.x);
+                        if (d < gateW/2) {
+                            g.hit = true;
+                            if (slot.item.type === 'correct') {
+                                AudioSys.playWarp();
+                                state.score += 100 * state.level;
+                                state.warpFactor = 5; 
+                                state.time += 3; // BONUS TIME
+                                showFloat("+3s", "#0ff");
+                                if (state.score > state.level * 800) state.level++;
+                            } else {
+                                AudioSys.playCrash();
+                                state.hp -= 25;
+                                state.warpFactor = 0.5;
+                                state.time -= 5; // PENALTY TIME
+                                showFloat("-5s", "#f33");
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (g.y > canvas.height) state.gates.splice(i, 1);
+        }
+
+        if (state.hp <= 0) {
+            endGame('hp');
+            return;
+        }
+
+        // Update HUD
+        document.getElementById('scoreVal').innerText = state.score;
+        document.getElementById('hpVal').innerText = state.hp;
+        document.getElementById('hpVal').style.color = state.hp < 40 ? '#f33' : '#0ff';
+        
+        let timeInt = Math.ceil(state.time);
+        document.getElementById('timeVal').innerText = timeInt;
+        document.getElementById('timeVal').style.color = timeInt < 10 ? '#f33' : '#ff0';
+
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    // --- DRAWING ---
+    function drawStdForm(ctx, item, x, y) {
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        if (item.isStd) {
+            ctx.font = 'bold 30px "Rajdhani"';
+            let baseW = ctx.measureText(item.val.base).width;
+            let xStr = " × 10";
+            let xW = ctx.measureText(xStr).width;
+            let totalW = baseW + xW + 15;
+
+            ctx.fillText(item.val.base + xStr, x - 5, y);
+            ctx.font = 'bold 20px "Rajdhani"';
+            ctx.fillText(item.val.exp, x + (totalW/2) - 5, y - 15);
+        } else {
+            ctx.font = 'bold 30px "Rajdhani"';
+            ctx.fillText(item.val.text, x, y);
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Lane Markers (Easier to identify)
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 20]);
+        const laneW = canvas.width / 3;
+        ctx.beginPath();
+        ctx.moveTo(laneW, 0); ctx.lineTo(laneW, canvas.height);
+        ctx.moveTo(laneW*2, 0); ctx.lineTo(laneW*2, canvas.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Stars
+        ctx.fillStyle = '#fff';
+        state.stars.forEach(s => {
+            let len = s.z * state.warpFactor * 2;
+            ctx.globalAlpha = Math.random() * 0.8 + 0.2;
+            ctx.fillRect(s.x, s.y, 2, Math.max(2, len));
+        });
+        ctx.globalAlpha = 1;
+
+        // Gates
+        state.gates.forEach(g => {
+            const gateH = 100;
+            const gateW = (canvas.width / 3) - 20;
+
+            g.slots.forEach(slot => {
+                const cx = slot.x;
+                const cy = g.y;
+                
+                // Glow
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#0ff';
+                
+                // Frame
+                ctx.strokeStyle = '#0ff';
+                ctx.lineWidth = 3;
+                
+                // If hit animation could go here
+                if(g.hit) {
+                     // fade out effect if hit
+                     ctx.globalAlpha = 0.5;
+                }
+
+                ctx.strokeRect(cx - gateW/2, cy - gateH/2, gateW, gateH);
+                
+                ctx.fillStyle = 'rgba(0, 20, 40, 0.85)';
+                ctx.fillRect(cx - gateW/2, cy - gateH/2, gateW, gateH);
+                
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+
+                drawStdForm(ctx, slot.item, cx, cy);
+            });
+        });
+
+        // Ship
+        const shipX = state.shipX;
+        const shipY = canvas.height - 150;
+        
+        ctx.save();
+        ctx.translate(shipX, shipY);
+        ctx.rotate(state.shipSpeed * 0.05 * Math.PI / 180);
+        
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#0ff';
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.moveTo(0, -40);
+        ctx.lineTo(30, 40);
+        ctx.lineTo(0, 30);
+        ctx.lineTo(-30, 40);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#0ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#0ff';
+        ctx.globalAlpha = 0.6;
+        let flicker = Math.random() * 20;
+        ctx.beginPath();
+        ctx.moveTo(-10, 35);
+        ctx.lineTo(0, 60 + flicker + (state.warpFactor*10));
+        ctx.lineTo(10, 35);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        if (state.currentProblem) {
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 22px "Rajdhani"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowBlur = 0;
+            
+            let lines = state.currentProblem.split('\n');
+            if (lines.length > 1) {
+                ctx.fillText(lines[0], 0, -60);
+                ctx.fillStyle = '#ff0';
+                ctx.font = '16px "Rajdhani"';
+                ctx.fillText(lines[1], 0, -35);
+            } else {
+                ctx.fillText(state.currentProblem, 0, -50);
+            }
+        }
+        ctx.restore();
+    }
+
+    function startGame() {
+        AudioSys.init();
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.add('hidden');
+        
+        state.score = 0;
+        state.hp = 100;
+        state.time = 60; // 60 Seconds
+        state.level = 1;
+        state.shipX = canvas.width / 2;
+        state.shipTargetX = state.shipX;
+        state.active = true;
+        state.gates = [];
+        state.warpFactor = 1;
+        state.lastTime = Date.now();
+        
+        initStars();
+        spawnGate();
+        update();
+    }
+</script>
+</body>
+</html>

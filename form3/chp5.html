@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trig Climber: Precision Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0d0d15;
+            font-family: 'Rajdhani', sans-serif;
+            color: white;
+            user-select: none;
+            touch-action: none;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        canvas { display: block; }
+
+        /* --- HUD --- */
+        .hud-panel {
+            position: absolute;
+            background: rgba(16, 20, 30, 0.9);
+            border: 2px solid #00d9ff;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #data-deck {
+            top: 10px;
+            right: 10px;
+            text-align: right;
+            min-width: 180px;
+        }
+
+        .data-row { margin-bottom: 2px; font-size: 1rem; }
+        .data-val { color: #fff; font-weight: bold; font-size: 1.1rem; }
+        
+        #stats-bar {
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+        .stat-label { font-size: 0.7rem; color: #88aaff; letter-spacing: 1px; }
+        .stat-val { font-size: 1.4rem; font-weight: bold; color: #fff; }
+        #time-val { color: #ffcc00; }
+
+        /* --- CONTROLS --- */
+        #control-deck {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        #slider-container {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 65%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 30px;
+            height: 30px;
+            background: #00d9ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px #00d9ff;
+            margin-top: -10px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+
+        #input-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00d9ff;
+            width: 120px;
+            text-align: right;
+            font-family: monospace; 
+        }
+
+        #fire-btn {
+            width: 100%;
+            padding: 15px 0;
+            font-size: 1.5rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00d9ff, #0055ff);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 85, 255, 0.4);
+            transition: transform 0.1s;
+        }
+        #fire-btn:active { transform: scale(0.98); }
+
+        /* --- OVERLAYS --- */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 13, 20, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .hidden { display: none !important; }
+
+        h1 { font-size: 3.5rem; color: #00d9ff; text-transform: uppercase; margin-bottom: 10px; text-shadow: 0 0 30px #00d9ff; text-align: center; }
+        p { color: #ccc; max-width: 500px; text-align: center; font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; padding: 0 20px;}
+
+        .start-btn {
+            background: transparent;
+            color: #00d9ff;
+            border: 2px solid #00d9ff;
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            font-family: 'Rajdhani';
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .start-btn:hover { background: #00d9ff; color: #000; }
+
+        #feedback-msg {
+            position: absolute;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 20px black;
+            pointer-events: none;
+            display: none;
+            z-index: 50;
+            white-space: nowrap;
+        }
+
+        /* Stars & Results */
+        .star-container { font-size: 3rem; color: #333; margin-bottom: 15px; }
+        .star.active { color: #ffd700; text-shadow: 0 0 20px #ffd700; }
+        
+        .result-box {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            min-width: 250px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .float-score {
+            position: absolute;
+            font-size: 2rem;
+            color: #ffd700;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="stats-bar" class="hud-panel">
+        <div class="stat-item">
+            <div class="stat-label">FLOOR</div>
+            <div class="stat-val" id="floor-val">1/5</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">TIME</div>
+            <div class="stat-val" id="time-val">60</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">SCORE</div>
+            <div class="stat-val" id="score-val">0</div>
+        </div>
+    </div>
+
+    <div id="data-deck" class="hud-panel">
+        <div style="color:#88aaff; font-size:0.8rem; margin-bottom:5px;">TRIG DATA</div>
+        <div class="data-row" id="trig-val-1">sin 30 = 0.500</div>
+        <div class="data-row" id="trig-val-2">cos 30 = 0.866</div>
+        <div class="data-row" id="trig-val-3">tan 30 = 0.577</div>
+    </div>
+
+    <div id="feedback-msg">SECURED!</div>
+
+    <div id="control-deck">
+        <div id="slider-container">
+            <span style="font-size:1.2rem; color:#88aaff;">SET x:</span>
+            <input type="range" id="input-slider" min="0" max="10000" value="0">
+            <div id="input-display">0.000</div>
+        </div>
+        <button id="fire-btn" onclick="fireHook()">GRAPPLE</button>
+    </div>
+
+    <div id="start-screen" class="screen">
+        <h1>TRIG CLIMBER</h1>
+        <p><strong>Chapter 5: Trigonometric Ratios</strong></p>
+        <p>1. Analyze the <strong>Holographic Formula</strong>.<br>
+        2. Find the Trig Value from the data deck.<br>
+        3. Calculate <strong>x</strong> (3 decimal places) to grapple up.</p>
+        <p style="color:#ffd700; font-size:0.9rem">Top Score: <span id="start-high-score">0</span></p>
+        <button class="start-btn" onclick="startGame()">START CLIMB</button>
+    </div>
+
+    <div id="game-over-screen" class="screen hidden">
+        <h1 id="end-title" style="color:#ff3366">FALLEN</h1>
+        
+        <div class="star-container">
+            <span id="star1" class="star">★</span>
+            <span id="star2" class="star">★</span>
+            <span id="star3" class="star">★</span>
+        </div>
+
+        <div class="result-box">
+            <p style="margin:5px">Score: <span id="final-score" style="color:#fff; font-weight:bold;">0</span></p>
+            <p style="margin:5px; font-size:0.9rem">Highest Floor: <span id="final-floor">1</span></p>
+            <p style="margin:5px; font-size:0.9rem; color:#888">Best: <span id="end-high-score">0</span></p>
+        </div>
+
+        <p id="fail-reason">Calculation Error.</p>
+        <button class="start-btn" onclick="startGame()">RETRY</button>
+    </div>
+</div>
+
+<script>
+    // --- AUDIO SYSTEM ---
+    const AudioSys = {
+        ctx: null,
+        init: function() {
+            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        },
+        playTone: function(freq, type, dur) {
+            if(!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            g.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+            osc.connect(g);
+            g.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + dur);
+        },
+        playZip: function() { 
+            this.playTone(400, 'sawtooth', 0.1); 
+            setTimeout(()=>this.playTone(800, 'sawtooth', 0.2), 50);
+        },
+        playHit: function() { 
+            this.playTone(200, 'square', 0.1); 
+            setTimeout(()=>this.playTone(100, 'square', 0.2), 100);
+        },
+        playWin: function() {
+            this.playTone(400, 'sine', 0.1);
+            setTimeout(()=>this.playTone(600, 'sine', 0.2), 100);
+            setTimeout(()=>this.playTone(800, 'sine', 0.4), 200);
+        },
+        playFall: function() { 
+            this.playTone(300, 'sawtooth', 0.5); 
+            setTimeout(()=>this.playTone(100, 'sawtooth', 0.5), 100);
+        }
+    };
+
+    // --- GAME ENGINE ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('input-slider');
+    const valDisplay = document.getElementById('input-display');
+
+    const MAX_FLOORS = 5;
+
+    let state = {
+        active: false,
+        floor: 1,
+        score: 0,
+        timer: 60,
+        
+        // Player Position
+        playerX: 100,
+        playerY: 0, 
+        
+        // Target Ledge
+        ledgeX: 0,
+        ledgeY: 0, 
+        
+        // Math Problem
+        type: 'tan', 
+        angle: 30,
+        knownSide: 'adj',
+        knownValue: 0,
+        targetValue: 0,
+        formulaText: "",
+        
+        // Animation
+        hookActive: false,
+        hookX: 0,
+        hookY: 0,
+        hookTargetX: 0,
+        hookTargetY: 0,
+        animT: 0, 
+        camY: 0, 
+        camTargetY: 0,
+        
+        displayVal: 0,
+        lastTime: 0
+    };
+
+    // Visual Scaling
+    const METER_SCALE = 4; // 4 pixels per meter
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // Load High Score
+        let hs = localStorage.getItem('trigClimberHS') || 0;
+        document.getElementById('start-high-score').innerText = hs;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- LOGIC ---
+
+    function startGame() {
+        AudioSys.init();
+        state.active = true;
+        state.floor = 1;
+        state.score = 0;
+        state.timer = 60; // Total time to climb all floors
+        state.playerX = 100;
+        state.playerY = 0;
+        state.camY = -canvas.height/2; 
+        state.camTargetY = -canvas.height/2;
+        state.hookActive = false;
+        state.lastTime = Date.now();
+        
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.add('hidden');
+        updateHUD();
+        
+        generateLevel();
+        loop();
+    }
+
+    function generateLevel() {
+        const types = ['find_opp', 'find_hyp'];
+        const mission = types[Math.floor(Math.random() * types.length)];
+        
+        const angles = [30, 45, 60];
+        const angle = angles[Math.floor(Math.random() * angles.length)];
+        
+        let dist = 0; // Adjacent
+        let height = 0; // Opposite
+        
+        let tanVal = Math.tan(angle * Math.PI / 180);
+        let cosVal = Math.cos(angle * Math.PI / 180);
+        let sinVal = Math.sin(angle * Math.PI / 180);
+
+        updateCheatSheet(angle, sinVal, cosVal, tanVal);
+
+        if (mission === 'find_opp') {
+            // Find Height (Opp) using Adj (Distance)
+            dist = Math.floor(Math.random() * 40) + 40; 
+            let rawH = dist * tanVal;
+            height = parseFloat(rawH.toFixed(3)); // 3 Decimals precision
+            
+            state.type = 'tan';
+            state.knownSide = 'adj';
+            state.knownValue = dist;
+            state.targetValue = height;
+            state.angle = angle;
+            
+            state.formulaText = `x = ${dist} × tan(${angle})`;
+            
+            // Slider range setup
+            let maxVal = Math.ceil(height * 2.0);
+            slider.max = maxVal * 1000; 
+            slider.value = 0;
+        } 
+        else {
+            // Find Rope (Hyp) using Adj (Distance)
+            dist = Math.floor(Math.random() * 40) + 40;
+            let rawHyp = dist / cosVal;
+            let hyp = parseFloat(rawHyp.toFixed(3));
+            height = dist * tanVal; // For visual placement
+
+            state.type = 'cos';
+            state.knownSide = 'adj';
+            state.knownValue = dist;
+            state.targetValue = hyp;
+            state.angle = angle;
+
+            state.formulaText = `x = ${dist} ÷ cos(${angle})`;
+            
+            let maxVal = Math.ceil(hyp * 2.0);
+            slider.max = maxVal * 1000; 
+            slider.value = 0;
+        }
+
+        // Set World Coordinates
+        state.ledgeX = state.playerX + (dist * METER_SCALE); 
+        state.ledgeY = state.playerY + (height * METER_SCALE);
+        
+        // Reset Inputs
+        state.displayVal = 0;
+        valDisplay.innerText = "0.000";
+    }
+
+    function updateCheatSheet(ang, s, c, t) {
+        document.getElementById('trig-val-1').innerText = `sin ${ang}° = ${s.toFixed(3)}`;
+        document.getElementById('trig-val-2').innerText = `cos ${ang}° = ${c.toFixed(3)}`;
+        document.getElementById('trig-val-3').innerText = `tan ${ang}° = ${t.toFixed(3)}`;
+    }
+
+    slider.addEventListener('input', (e) => {
+        let val = parseInt(e.target.value) / 1000;
+        state.displayVal = val;
+        valDisplay.innerText = val.toFixed(3);
+    });
+
+    function fireHook() {
+        if (state.hookActive) return;
+        AudioSys.playZip();
+        
+        state.hookActive = true;
+        state.animT = 0;
+        state.hookX = state.playerX;
+        state.hookY = state.playerY; 
+        
+        let aimedX, aimedY;
+        let input = parseFloat(state.displayVal);
+        let scale = METER_SCALE; 
+
+        if (state.type === 'tan') {
+            aimedX = state.playerX + (state.knownValue * scale);
+            aimedY = state.playerY + (input * scale);
+        } else {
+            let rad = state.angle * Math.PI / 180;
+            let dx = (input * Math.cos(rad));
+            let dy = (input * Math.sin(rad));
+            aimedX = state.playerX + (dx * scale);
+            aimedY = state.playerY + (dy * scale);
+        }
+
+        state.hookTargetX = aimedX;
+        state.hookTargetY = aimedY;
+    }
+
+    function update() {
+        if (!state.active) return;
+
+        // Timer Logic
+        let now = Date.now();
+        let dt = (now - state.lastTime) / 1000;
+        state.lastTime = now;
+        
+        state.timer -= dt;
+        if (state.timer <= 0) {
+            state.timer = 0;
+            endGame(false, "Time Expired");
+            return;
+        }
+        updateHUD();
+
+        // Camera
+        let midY = (state.playerY + state.ledgeY) / 2;
+        state.camTargetY = midY - (canvas.height * 0.4); 
+        state.camY += (state.camTargetY - state.camY) * 0.1;
+
+        // Hook Animation
+        if (state.hookActive) {
+            state.animT += 0.05;
+            state.hookX = state.playerX + (state.hookTargetX - state.playerX) * state.animT;
+            state.hookY = state.playerY + (state.hookTargetY - state.playerY) * state.animT;
+
+            if (state.animT >= 1) {
+                checkHit();
+            }
+        }
+    }
+
+    function checkHit() {
+        let mathDiff = Math.abs(state.displayVal - state.targetValue);
+        
+        if (mathDiff < 0.5) { 
+            // SUCCESS
+            AudioSys.playHit();
+            
+            // Score Calc: 500 base + Speed Bonus
+            let points = 500;
+            state.score += points;
+            spawnFloatScore("+" + points);
+
+            // Move Player
+            state.hookActive = false;
+            state.playerX = state.ledgeX;
+            state.playerY = state.ledgeY;
+            state.floor++;
+            state.timer += 15; // Time Bonus
+            
+            if (state.floor > MAX_FLOORS) {
+                endGame(true, "Summit Reached!");
+            } else {
+                showFeedback("SECURED!", "#00d9ff");
+                generateLevel();
+            }
+        } else {
+            // FAIL
+            AudioSys.playFall();
+            endGame(false, "Missed Ledge");
+        }
+    }
+
+    function endGame(victory, reason) {
+        state.active = false;
+        
+        const screen = document.getElementById('game-over-screen');
+        const title = document.getElementById('end-title');
+        const failMsg = document.getElementById('fail-reason');
+        const star1 = document.getElementById('star1');
+        const star2 = document.getElementById('star2');
+        const star3 = document.getElementById('star3');
+
+        screen.classList.remove('hidden');
+        document.getElementById('final-score').innerText = Math.floor(state.score);
+        document.getElementById('final-floor').innerText = state.floor - 1;
+
+        // Reset Stars
+        star1.classList.remove('active');
+        star2.classList.remove('active');
+        star3.classList.remove('active');
+
+        // High Score
+        let hs = localStorage.getItem('trigClimberHS') || 0;
+        if (state.score > hs) {
+            hs = Math.floor(state.score);
+            localStorage.setItem('trigClimberHS', hs);
+        }
+        document.getElementById('end-high-score').innerText = hs;
+
+        if (victory) {
+            AudioSys.playWin();
+            title.innerText = "MISSION COMPLETE";
+            title.style.color = "#00d9ff";
+            failMsg.innerText = "Summit reached successfully.";
+            
+            // Star Logic
+            star1.classList.add('active'); // Finish
+            if (state.score > 3000) star2.classList.add('active');
+            if (state.score > 4500) star3.classList.add('active');
+        } else {
+            title.innerText = "FALLEN";
+            title.style.color = "#ff3366";
+            failMsg.innerText = reason;
+        }
+    }
+
+    function updateHUD() {
+        document.getElementById('floor-val').innerText = Math.min(state.floor, MAX_FLOORS) + "/" + MAX_FLOORS;
+        document.getElementById('score-val').innerText = Math.floor(state.score);
+        
+        let t = Math.ceil(state.timer);
+        let el = document.getElementById('time-val');
+        el.innerText = t;
+        el.style.color = t < 10 ? '#ff3366' : '#ffcc00';
+    }
+
+    function showFeedback(text, col) {
+        const el = document.getElementById('feedback-msg');
+        el.innerText = text;
+        el.style.color = col;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 1500);
+    }
+
+    function spawnFloatScore(txt) {
+        let el = document.createElement('div');
+        el.className = 'float-score';
+        el.innerText = txt;
+        el.style.left = (window.innerWidth/2) + 'px';
+        el.style.top = (window.innerHeight/2) + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+    }
+
+    // --- DRAWING ---
+    function draw() {
+        // Clear
+        ctx.fillStyle = '#0d0d15';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        
+        // World to Screen Coords
+        const worldToScreen = (wx, wy) => {
+            return {
+                x: wx,
+                y: canvas.height - (wy - state.camY) 
+            };
+        };
+
+        let pPos = worldToScreen(state.playerX, state.playerY);
+        let lPos = worldToScreen(state.ledgeX, state.ledgeY);
+        
+        // 1. Draw Platforms
+        ctx.fillStyle = '#222';
+        ctx.fillRect(pPos.x - 50, pPos.y, 100, canvas.height); 
+        ctx.fillStyle = '#00d9ff';
+        ctx.fillRect(pPos.x - 50, pPos.y, 100, 10); 
+
+        ctx.fillStyle = '#1a1a20';
+        ctx.fillRect(lPos.x, lPos.y, 200, canvas.height); 
+        ctx.fillStyle = '#ff0055'; 
+        ctx.fillRect(lPos.x, lPos.y, 50, 10); 
+
+        // 2. Draw Math Overlay
+        if (!state.hookActive) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(0, 217, 255, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            ctx.moveTo(pPos.x, pPos.y); 
+            ctx.lineTo(lPos.x, pPos.y); 
+            ctx.lineTo(lPos.x, lPos.y); 
+            ctx.lineTo(pPos.x, pPos.y); 
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.font = "bold 16px Rajdhani";
+            ctx.fillStyle = "#fff";
+            
+            // Angle
+            ctx.fillText(state.angle + "°", pPos.x + 60, pPos.y - 10);
+
+            // Known Values
+            if (state.knownSide === 'adj') {
+                ctx.fillText(state.knownValue + "m", (pPos.x + lPos.x)/2, pPos.y + 25);
+            }
+            
+            // Unknown X
+            ctx.fillStyle = "#ffcc00";
+            ctx.font = "bold 24px Rajdhani";
+            if (state.type === 'tan') {
+                ctx.fillText("x", lPos.x + 20, (pPos.y + lPos.y)/2);
+            } else {
+                ctx.fillText("x", (pPos.x + lPos.x)/2, (pPos.y + lPos.y)/2 - 20);
+            }
+            
+            // HOLOGRAPHIC FORMULA
+            ctx.font = "bold 22px Rajdhani";
+            ctx.fillStyle = "#00d9ff";
+            ctx.shadowColor = "rgba(0, 217, 255, 0.8)";
+            ctx.shadowBlur = 15;
+            ctx.fillText(state.formulaText, pPos.x - 20, pPos.y - 80);
+            ctx.shadowBlur = 0;
+        }
+
+        // 3. Draw Player
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(pPos.x, pPos.y - 15, 10, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillRect(pPos.x - 5, pPos.y - 15, 10, 25);
+
+        // 4. Draw Hook
+        if (state.hookActive) {
+            let hPos = worldToScreen(state.hookX, state.hookY);
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(pPos.x, pPos.y - 10);
+            ctx.lineTo(hPos.x, hPos.y);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.arc(hPos.x, hPos.y, 5, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
+    function loop() {
+        if(state.active) {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+    }
+
+</script>
+</body>
+</html>

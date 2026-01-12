@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Defense: The Interest Wars</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            background-color: #050505;
+            font-family: 'Chakra Petch', sans-serif;
+            color: white;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            background: #111;
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.2);
+            border: 2px solid #333;
+        }
+
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        /* STATS BAR */
+        #stats-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 10px 30px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            pointer-events: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .stat { text-align: center; min-width: 60px; }
+        .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-val { font-size: 1.3rem; font-weight: bold; }
+        #money-val { color: #00ff88; text-shadow: 0 0 5px rgba(0,255,136,0.5); }
+        #lives-val { color: #ff3333; }
+        #wave-val { color: #00ccff; }
+        #debt-val { color: #ff5555; }
+        #score-val { color: #ffd700; }
+        #time-val { color: #fff; }
+
+        /* INTEREST TIMER */
+        #interest-box {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            background: rgba(0, 40, 20, 0.9);
+            border: 2px solid #00ff88;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            width: 180px;
+            pointer-events: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+        .int-title { color: #00ff88; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        .int-timer { font-size: 2rem; font-weight: bold; }
+        .int-desc { font-size: 0.8rem; color: #aaa; margin-top: 5px; line-height: 1.2; }
+
+        /* BUILD MENU */
+        #build-menu {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .tower-card {
+            background: #222;
+            border: 2px solid #555;
+            padding: 10px;
+            width: 110px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+            border-radius: 5px;
+        }
+        .tower-card:hover { transform: translateY(-5px); border-color: #fff; background: #333; }
+        .tower-card.selected { border-color: #00ff88; background: #003311; transform: scale(1.05); }
+        
+        .t-name { font-weight: bold; font-size: 0.8rem; margin-bottom: 5px; letter-spacing: 1px; }
+        .t-cost { color: #00ff88; font-weight: bold; font-size: 1.1rem; }
+        .t-desc { font-size: 0.7rem; color: #aaa; margin-top: 5px; }
+
+        #loan-btn { background: #300; border-color: #f00; }
+        #loan-btn:hover { background: #500; }
+
+        /* SCREENS */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 10, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+        }
+        .hidden { display: none !important; }
+
+        h1 { color: #00ff88; font-size: 4rem; margin-bottom: 10px; text-transform: uppercase; text-shadow: 0 0 30px #00ff88; }
+        p { max-width: 600px; text-align: center; color: #ccc; line-height: 1.6; margin-bottom: 30px; font-size: 1.1rem; }
+        
+        button.start-btn {
+            background: transparent; 
+            color: #00ff88; 
+            border: 2px solid #00ff88;
+            padding: 15px 50px; font-size: 1.5rem; font-weight: bold;
+            font-family: 'Chakra Petch'; cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            margin-top: 10px;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        button.start-btn:hover { background: #00ff88; color: #000; box-shadow: 0 0 40px rgba(0, 255, 136, 0.6); }
+
+        /* End Game Specifics */
+        .star-container { 
+            display: flex; 
+            gap: 15px; 
+            font-size: 4rem; 
+            color: #333; 
+            margin-bottom: 20px; 
+            height: 80px;
+        }
+        .star { transition: transform 0.3s, color 0.3s; }
+        .star.active { color: #ffd700; text-shadow: 0 0 30px #ffd700; transform: scale(1.2); }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+            width: 400px;
+        }
+
+        .result-box {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .rb-label { color: #888; font-size: 0.8rem; text-transform: uppercase; }
+        .rb-val { color: #fff; font-size: 1.5rem; font-weight: bold; }
+
+        /* Floating Text */
+        .floater {
+            position: absolute;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            text-shadow: 2px 2px 0 #000;
+            font-size: 1.2rem;
+            z-index: 50;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        <div id="stats-bar">
+            <div class="stat">
+                <div class="stat-label">Time</div>
+                <div class="stat-val" id="time-val">00:00</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Score</div>
+                <div class="stat-val" id="score-val">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Cash</div>
+                <div class="stat-val" id="money-val">$400</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Health</div>
+                <div class="stat-val" id="lives-val">20</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Wave</div>
+                <div class="stat-val" id="wave-val">1/5</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Debt</div>
+                <div class="stat-val" id="debt-val">$0</div>
+            </div>
+        </div>
+
+        <div id="interest-box">
+            <div class="int-title">COMPOUND INTEREST</div>
+            <div class="int-timer" id="int-timer">5.0s</div>
+            <div class="int-desc">Earn +5% on current cash!<br>Don't spend it all!</div>
+        </div>
+
+        <div id="build-menu">
+            <div class="tower-card" onclick="selectTower(0)" id="btn-t0">
+                <div class="t-name">SAVINGS TURRET</div>
+                <div class="t-cost">$100</div>
+                <div class="t-desc">Low Cost<br>Fast Fire</div>
+            </div>
+            <div class="tower-card" onclick="selectTower(1)" id="btn-t1">
+                <div class="t-name">STOCK LASER</div>
+                <div class="t-cost">$300</div>
+                <div class="t-desc">High Dmg<br>Long Range</div>
+            </div>
+            <div class="tower-card" id="loan-btn" onclick="takeLoan()">
+                <div class="t-name" style="color:#f55">TAKE LOAN</div>
+                <div class="t-cost">+$500</div>
+                <div class="t-desc">Cost: $2/sec<br>High Risk</div>
+            </div>
+             <div class="tower-card" onclick="payDebt()" style="background:#442222; border-color:#f55">
+                <div class="t-name">PAY DEBT</div>
+                <div class="t-cost">-$100</div>
+                <div class="t-desc">Reduce Interest</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="start-screen" class="screen">
+        <h1>ASSET DEFENSE</h1>
+        <p><strong>Topic: Savings, Investment & Debt</strong><br><br>
+        1. <strong>Interest:</strong> Every 5 seconds, you earn 5% on your CASH. Holding money is a strategy!<br>
+        2. <strong>Goal:</strong> Survive 5 Waves to win.<br>
+        3. <strong>Score:</strong> Kill enemies and accumulate wealth for high scores.</p>
+        
+        <div class="result-box" style="margin-bottom:20px; border-color:#00ff88; box-shadow:0 0 10px rgba(0,255,136,0.2);">
+            <div class="rb-label">ALL-TIME TOP SCORE</div>
+            <div class="rb-val" id="top-score-start" style="color:#00ff88">0</div>
+        </div>
+
+        <button class="start-btn" onclick="startGame()">START DEFENSE</button>
+    </div>
+
+    <div id="game-over-screen" class="screen hidden">
+        <h1 id="end-title">GAME OVER</h1>
+        
+        <div class="star-container">
+            <span id="star1" class="star">★</span>
+            <span id="star2" class="star">★</span>
+            <span id="star3" class="star">★</span>
+        </div>
+
+        <div class="result-grid">
+            <div class="result-box">
+                <div class="rb-label">FINAL SCORE</div>
+                <div class="rb-val" id="end-score" style="color:#ffd700">0</div>
+            </div>
+            <div class="result-box">
+                <div class="rb-label">HIGH SCORE</div>
+                <div class="rb-val" id="end-high-score">0</div>
+            </div>
+            <div class="result-box">
+                <div class="rb-label">TIME</div>
+                <div class="rb-val" id="end-time">00:00</div>
+            </div>
+            <div class="result-box">
+                <div class="rb-label">LIVES LEFT</div>
+                <div class="rb-val" id="end-lives">0</div>
+            </div>
+        </div>
+        
+        <p id="end-msg">Your Net Worth hit zero.</p>
+        <button class="start-btn" onclick="startGame()">PLAY AGAIN</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- CONFIG ---
+    const TILE_SIZE = 60;
+    const GRID_W = 16;
+    const GRID_H = 10;
+    const INTEREST_RATE = 0.05; 
+    const MAX_WAVES = 5;
+    
+    // Map: 0=Grass(Build), 1=Path(Walk), 2=Base
+    const MAP_DATA = [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0],
+        [0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0],
+        [0,0,0,1,1,1,1,0,0,0,0,1,1,1,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+        [0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,0],
+        [0,0,1,0,0,0,1,1,1,1,0,0,0,1,0,0],
+        [0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,0],
+        [0,0,1,1,1,1,1,1,1,1,0,0,0,1,1,2],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ];
+
+    // --- PATHFINDING (BFS) ---
+    let PATH_COORDS = [];
+
+    function generatePath() {
+        let start = {x:0, y:1}; 
+        let queue = [{x: start.x, y: start.y, path: []}];
+        let visited = new Set();
+        
+        while(queue.length > 0) {
+            let current = queue.shift();
+            let key = `${current.x},${current.y}`;
+            
+            if(visited.has(key)) continue;
+            visited.add(key);
+
+            let newPath = [...current.path, {x: current.x + 0.5, y: current.y + 0.5}];
+
+            if (MAP_DATA[current.y][current.x] === 2) {
+                return newPath;
+            }
+
+            const dirs = [[1,0], [0,1], [0,-1], [-1,0]];
+            for (let d of dirs) {
+                let nx = current.x + d[0];
+                let ny = current.y + d[1];
+
+                if (nx >= 0 && nx < GRID_W && ny >= 0 && ny < GRID_H) {
+                    let val = MAP_DATA[ny][nx];
+                    if ((val === 1 || val === 2) && !visited.has(`${nx},${ny}`)) {
+                        queue.push({x: nx, y: ny, path: newPath});
+                    }
+                }
+            }
+        }
+        return [];
+    }
+    
+    // --- GAME STATE ---
+    let state = {
+        money: 400,
+        score: 0,
+        lives: 20,
+        wave: 1,
+        debt: 0,
+        startTime: 0,
+        gameTime: 0,
+        lastInterestTime: 0,
+        active: false,
+        enemies: [],
+        towers: [],
+        projectiles: [],
+        selectedTower: -1, 
+        spawnTimer: 0,
+        spawnCount: 0
+    };
+
+    function resize() {
+        canvas.width = GRID_W * TILE_SIZE;
+        canvas.height = GRID_H * TILE_SIZE;
+        PATH_COORDS = generatePath();
+        
+        // Load High Score on Load
+        let hs = localStorage.getItem('assetDefenseHighScore') || 0;
+        document.getElementById('top-score-start').innerText = hs;
+    }
+    resize();
+
+    // --- LOGIC ---
+
+    function startGame() {
+        state = {
+            money: 400,
+            score: 0,
+            lives: 20,
+            wave: 1,
+            debt: 0,
+            startTime: Date.now(),
+            gameTime: 0,
+            lastInterestTime: Date.now(),
+            active: true,
+            enemies: [],
+            towers: [],
+            projectiles: [],
+            selectedTower: -1,
+            spawnTimer: 0,
+            spawnCount: 10
+        };
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.add('hidden');
+        
+        // Reset Visuals
+        document.getElementById('star1').classList.remove('active');
+        document.getElementById('star2').classList.remove('active');
+        document.getElementById('star3').classList.remove('active');
+        
+        updateUI();
+        loop();
+    }
+
+    function update() {
+        if (!state.active) return;
+        const now = Date.now();
+
+        // Timer
+        state.gameTime = Math.floor((now - state.startTime) / 1000);
+        let mins = Math.floor(state.gameTime / 60).toString().padStart(2, '0');
+        let secs = (state.gameTime % 60).toString().padStart(2, '0');
+        document.getElementById('time-val').innerText = `${mins}:${secs}`;
+
+        // 1. INTEREST MECHANIC
+        let timeDiff = now - state.lastInterestTime;
+        let timeLeft = Math.max(0, 5000 - timeDiff);
+        document.getElementById('int-timer').innerText = (timeLeft / 1000).toFixed(1) + "s";
+        
+        if (timeDiff >= 5000) {
+            let interest = Math.floor(state.money * INTEREST_RATE);
+            if (interest > 0) {
+                state.money += interest;
+                state.score += interest; // Score points for earning interest
+                spawnFloatText(`+${interest} INTEREST`, canvas.width/2, canvas.height/2, '#00ff88');
+            }
+            state.lastInterestTime = now;
+            
+            // Debt
+            if (state.debt > 0) {
+                let debtPain = Math.ceil(state.debt * 0.10); 
+                state.money -= debtPain;
+                spawnFloatText(`-${debtPain} DEBT PAY`, canvas.width/2, canvas.height/2 + 30, '#ff5555');
+            }
+        }
+
+        // 2. SPAWNING
+        if (state.spawnCount > 0) {
+            state.spawnTimer++;
+            if (state.spawnTimer > 60 - (state.wave * 5)) {
+                spawnEnemy();
+                state.spawnTimer = 0;
+                state.spawnCount--;
+            }
+        } else if (state.enemies.length === 0) {
+            // Wave Complete
+            if (state.wave < MAX_WAVES) {
+                state.wave++;
+                state.spawnCount = 5 + (state.wave * 4);
+                state.score += 100; // Wave Clear Bonus
+                spawnFloatText(`WAVE ${state.wave} START`, canvas.width/2, 100, '#fff');
+            } else {
+                endGame(true); // VICTORY
+            }
+        }
+
+        // 3. MOVING ENEMIES
+        for (let i = state.enemies.length - 1; i >= 0; i--) {
+            let e = state.enemies[i];
+            moveEnemy(e);
+            if (e.finished) {
+                state.lives--;
+                state.enemies.splice(i, 1);
+            } else if (e.hp <= 0) {
+                state.money += e.reward;
+                state.score += e.reward * 2;
+                state.enemies.splice(i, 1);
+            }
+        }
+
+        // 4. TOWERS
+        state.towers.forEach(t => {
+            if (t.cooldown > 0) t.cooldown--;
+            else {
+                let target = getTarget(t);
+                if (target) {
+                    shoot(t, target);
+                    t.cooldown = t.maxCooldown;
+                }
+            }
+        });
+
+        // 5. PROJECTILES
+        for (let i = state.projectiles.length - 1; i >= 0; i--) {
+            let p = state.projectiles[i];
+            moveProjectile(p);
+            if (p.hit) {
+                p.target.hp -= p.dmg;
+                state.projectiles.splice(i, 1);
+            } else if (p.life <= 0) {
+                state.projectiles.splice(i, 1);
+            }
+        }
+
+        if (state.lives <= 0) endGame(false); // DEFEAT
+        if (state.money < 0) state.money = 0; // Prevent negative
+        updateUI();
+    }
+
+    // --- GAMEPLAY HELPERS ---
+
+    function spawnEnemy() {
+        state.enemies.push({
+            x: PATH_COORDS[0].x * TILE_SIZE, 
+            y: PATH_COORDS[0].y * TILE_SIZE,
+            hp: 20 + (state.wave * 15),
+            speed: 1.5 + (state.wave * 0.2),
+            reward: 5 + state.wave,
+            pathIndex: 0,
+            finished: false,
+            maxHp: 20 + (state.wave * 15)
+        });
+    }
+
+    function moveEnemy(e) {
+        if (e.pathIndex >= PATH_COORDS.length - 1) {
+            e.finished = true;
+            return;
+        }
+        
+        let target = PATH_COORDS[e.pathIndex + 1];
+        let tx = target.x * TILE_SIZE;
+        let ty = target.y * TILE_SIZE;
+        
+        let dx = tx - e.x;
+        let dy = ty - e.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist < e.speed) {
+            e.x = tx;
+            e.y = ty;
+            e.pathIndex++;
+        } else {
+            e.x += (dx / dist) * e.speed;
+            e.y += (dy / dist) * e.speed;
+        }
+    }
+
+    function getTarget(tower) {
+        let best = null;
+        let minD = tower.range;
+        state.enemies.forEach(e => {
+            let d = Math.hypot(e.x - tower.x, e.y - tower.y);
+            if (d < minD) {
+                minD = d;
+                best = e;
+            }
+        });
+        return best;
+    }
+
+    function shoot(tower, target) {
+        state.projectiles.push({
+            x: tower.x, y: tower.y,
+            target: target,
+            speed: 12,
+            dmg: tower.dmg,
+            color: tower.type === 0 ? '#00ff88' : '#00ccff',
+            life: 50,
+            hit: false
+        });
+    }
+
+    function moveProjectile(p) {
+        if (!state.enemies.includes(p.target)) {
+            p.life = 0; return;
+        }
+        let dx = p.target.x - p.x;
+        let dy = p.target.y - p.y;
+        let dist = Math.hypot(dx, dy);
+        
+        if (dist < p.speed) {
+            p.hit = true;
+        } else {
+            p.x += (dx / dist) * p.speed;
+            p.y += (dy / dist) * p.speed;
+        }
+    }
+
+    // --- INTERACTION ---
+
+    function selectTower(id) {
+        state.selectedTower = id;
+        document.getElementById('btn-t0').classList.remove('selected');
+        document.getElementById('btn-t1').classList.remove('selected');
+        document.getElementById(`btn-t${id}`).classList.add('selected');
+    }
+
+    function takeLoan() {
+        state.money += 500;
+        state.debt += 500;
+        state.score -= 50; // Penalty
+        spawnFloatText("LOAN +500", canvas.width/2, canvas.height/2, '#fff');
+    }
+
+    function payDebt() {
+        if (state.money >= 100 && state.debt > 0) {
+            state.money -= 100;
+            state.debt = Math.max(0, state.debt - 100);
+            state.score += 20; // Bonus
+        }
+    }
+
+    canvas.addEventListener('mousedown', e => {
+        if (!state.active || state.selectedTower === -1) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const col = Math.floor(x / TILE_SIZE);
+        const row = Math.floor(y / TILE_SIZE);
+
+        if (col < 0 || col >= GRID_W || row < 0 || row >= GRID_H) return;
+
+        if (MAP_DATA[row][col] === 0) {
+            let occupied = state.towers.some(t => Math.floor(t.x/TILE_SIZE) === col && Math.floor(t.y/TILE_SIZE) === row);
+            if (occupied) return;
+
+            let cost = state.selectedTower === 0 ? 100 : 300;
+            if (state.money >= cost) {
+                state.money -= cost;
+                state.towers.push({
+                    x: (col + 0.5) * TILE_SIZE,
+                    y: (row + 0.5) * TILE_SIZE,
+                    type: state.selectedTower,
+                    range: state.selectedTower === 0 ? 150 : 250,
+                    dmg: state.selectedTower === 0 ? 5 : 20,
+                    maxCooldown: state.selectedTower === 0 ? 20 : 60,
+                    cooldown: 0
+                });
+                state.selectedTower = -1;
+                document.getElementById('btn-t0').classList.remove('selected');
+                document.getElementById('btn-t1').classList.remove('selected');
+            } else {
+                spawnFloatText("NO CASH!", x, y, '#f55');
+            }
+        }
+    });
+
+    // --- DRAWING ---
+
+    function draw() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid
+        for(let r=0; r<GRID_H; r++) {
+            for(let c=0; c<GRID_W; c++) {
+                let val = MAP_DATA[r][c];
+                let x = c * TILE_SIZE;
+                let y = r * TILE_SIZE;
+                
+                if (val === 0) { 
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(x, y, TILE_SIZE-1, TILE_SIZE-1);
+                    if ((c+r)%2==0) { ctx.fillStyle='#161616'; ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE); }
+                } else if (val === 1) { 
+                    ctx.fillStyle = '#222';
+                    ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                    ctx.strokeStyle = '#333';
+                    ctx.strokeRect(x,y,TILE_SIZE,TILE_SIZE);
+                } else if (val === 2) { 
+                    ctx.fillStyle = '#0055aa';
+                    ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                    ctx.font = '10px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('BASE', x+10, y+35);
+                }
+            }
+        }
+
+        // Draw Towers
+        state.towers.forEach(t => {
+            ctx.fillStyle = t.type === 0 ? '#00ff88' : '#00ccff';
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 20, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Base
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 10, 0, Math.PI*2);
+            ctx.stroke();
+        });
+
+        // Draw Enemies
+        state.enemies.forEach(e => {
+            ctx.fillStyle = '#ff3333';
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, 15, 0, Math.PI*2);
+            ctx.fill();
+            
+            let hpPct = e.hp / e.maxHp;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(e.x - 15, e.y - 25, 30, 5);
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(e.x - 15, e.y - 25, 30 * hpPct, 5);
+        });
+
+        // Draw Projectiles
+        state.projectiles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5, 0, Math.PI*2);
+            ctx.fill();
+        });
+    }
+
+    function spawnFloatText(txt, x, y, col) {
+        let el = document.createElement('div');
+        el.className = 'floater';
+        el.innerText = txt;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.color = col;
+        document.body.appendChild(el);
+        setTimeout(()=>el.remove(), 1000);
+    }
+
+    function updateUI() {
+        document.getElementById('money-val').innerText = "$" + Math.floor(state.money);
+        document.getElementById('score-val').innerText = Math.floor(state.score);
+        document.getElementById('lives-val').innerText = state.lives;
+        document.getElementById('wave-val').innerText = state.wave + "/" + MAX_WAVES;
+        document.getElementById('debt-val').innerText = "$" + state.debt;
+        
+        if (state.debt > 0) document.getElementById('debt-val').style.color = '#f00';
+        else document.getElementById('debt-val').style.color = '#888';
+    }
+
+    function endGame(victory) {
+        state.active = false;
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        
+        const title = document.getElementById('end-title');
+        const msg = document.getElementById('end-msg');
+        const endScore = document.getElementById('end-score');
+        const star1 = document.getElementById('star1');
+        const star2 = document.getElementById('star2');
+        const star3 = document.getElementById('star3');
+
+        // Stats Display
+        let mins = Math.floor(state.gameTime / 60).toString().padStart(2, '0');
+        let secs = (state.gameTime % 60).toString().padStart(2, '0');
+        document.getElementById('end-time').innerText = `${mins}:${secs}`;
+        document.getElementById('end-lives').innerText = state.lives;
+
+        // Apply Time Bonus if won
+        if (victory) {
+            let timeBonus = Math.max(0, 300 - state.gameTime) * 10; // Faster = More Points
+            state.score += timeBonus;
+        }
+
+        // High Score
+        let hs = localStorage.getItem('assetDefenseHighScore') || 0;
+        if (state.score > hs) {
+            hs = Math.floor(state.score);
+            localStorage.setItem('assetDefenseHighScore', hs);
+            msg.innerText = "NEW HIGH SCORE!";
+        }
+        document.getElementById('end-high-score').innerText = hs;
+        endScore.innerText = Math.floor(state.score);
+
+        if (victory) {
+            title.innerText = "FINANCIAL FREEDOM!";
+            title.style.color = "#ffd700";
+            msg.innerText = "You defended your assets successfully.";
+            
+            // Stars Logic
+            setTimeout(() => star1.classList.add('active'), 200);
+            if (state.lives > 10) setTimeout(() => star2.classList.add('active'), 600);
+            if (state.lives >= 18) setTimeout(() => star3.classList.add('active'), 1000);
+        } else {
+            title.innerText = "BANKRUPT";
+            title.style.color = "#ff5555";
+            msg.innerText = "The debt consumed you. Try again!";
+            // No stars for losing
+        }
+    }
+
+    function loop() {
+        if (!state.active) return;
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+</script>
+</body>
+</html>
